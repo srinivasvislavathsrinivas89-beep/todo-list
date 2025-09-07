@@ -1,0 +1,142 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Basic To-Do App</title>
+     <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>To-Do App</h1>
+    <form id="taskForm">
+        <input type="text" id="taskInput" placeholder="Add a new task..." required>
+        <button type="submit">Add Task</button>
+    </form>
+
+    <h2>Pending Tasks</h2>
+    <ul id="pendingTasks" class="task-list"></ul>
+
+    <h2>Completed Tasks</h2>
+    <ul id="completedTasks" class="task-list"></ul>
+
+    <script>
+        let tasks = [];
+        let editingId = null;
+
+        function formatDate(date) {
+            return date.toLocaleString();
+        }
+
+        function renderTasks() {
+            const pendingList = document.getElementById('pendingTasks');
+            const completedList = document.getElementById('completedTasks');
+            pendingList.innerHTML = '';
+            completedList.innerHTML = '';
+
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.className = 'task-item';
+
+                if (editingId === task.id) {
+                    // Edit mode
+                    const editInput = document.createElement('input');
+                    editInput.type = 'text';
+                    editInput.value = task.text;
+                    editInput.className = 'edit-input';
+                    li.appendChild(editInput);
+
+                    const saveBtn = document.createElement('button');
+                    saveBtn.textContent = 'Save';
+                    saveBtn.onclick = () => {
+                        task.text = editInput.value.trim();
+                        editingId = null;
+                        renderTasks();
+                    };
+                    li.appendChild(saveBtn);
+
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.textContent = 'Cancel';
+                    cancelBtn.onclick = () => {
+                        editingId = null;
+                        renderTasks();
+                    };
+                    li.appendChild(cancelBtn);
+                } else {
+                    const span = document.createElement('span');
+                    span.textContent = task.text;
+                    if (task.completed) span.className = 'completed';
+                    li.appendChild(span);
+
+                    const timestamp = document.createElement('span');
+                    timestamp.className = 'timestamp';
+                    timestamp.textContent = `Added: ${formatDate(new Date(task.addedAt))}`;
+                    li.appendChild(timestamp);
+
+                    if (task.completed) {
+                        const completedTime = document.createElement('span');
+                        completedTime.className = 'timestamp';
+                        completedTime.textContent = ` | Completed: ${formatDate(new Date(task.completedAt))}`;
+                        li.appendChild(completedTime);
+                    }
+
+                    const actions = document.createElement('span');
+                    actions.className = 'actions';
+
+                    if (!task.completed) {
+                        const completeBtn = document.createElement('button');
+                        completeBtn.textContent = 'Complete';
+                        completeBtn.onclick = () => {
+                            task.completed = true;
+                            task.completedAt = new Date().toISOString();
+                            renderTasks();
+                        };
+                        actions.appendChild(completeBtn);
+                    }
+
+                    const editBtn = document.createElement('button');
+                    editBtn.textContent = 'Edit';
+                    editBtn.onclick = () => {
+                        editingId = task.id;
+                        renderTasks();
+                    };
+                    actions.appendChild(editBtn);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.onclick = () => {
+                        tasks = tasks.filter(t => t.id !== task.id);
+                        renderTasks();
+                    };
+                    actions.appendChild(deleteBtn);
+
+                    li.appendChild(actions);
+                }
+
+                if (task.completed) {
+                    completedList.appendChild(li);
+                } else {
+                    pendingList.appendChild(li);
+                }
+            });
+        }
+
+        document.getElementById('taskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = document.getElementById('taskInput');
+            const text = input.value.trim();
+            if (text) {
+                tasks.push({
+                    id: Date.now(),
+                    text,
+                    completed: false,
+                    addedAt: new Date().toISOString(),
+                    completedAt: null
+                });
+                input.value = '';
+                renderTasks();
+            }
+        });
+
+        renderTasks();
+    </script>
+</body>
+</html>
